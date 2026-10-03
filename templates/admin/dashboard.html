@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard — Think4U Launch Page</title>
+  <meta name="robots" content="noindex, nofollow"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet"/>
+  <style>
+    /* ===== CSS Variables ===== */
+    :root {
+      --primary:   #1f0606;
+      --primary-h: #2d0808;
+      --accent:    #d58d4b;
+      --cream:     #fdf8f0;
+      --sidebar-w: 260px;
+      --text:      #1a0404;
+      --text-mid:  #5a4040;
+      --text-light:#888;
+      --border:    #e8ddd5;
+      --success:   #16a34a;
+      --error:     #dc2626;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: 'Inter', sans-serif; background: #f3ece6; color: var(--text); }
+
+    /* ===== Layout ===== */
+    .layout { display: flex; min-height: 100vh; }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--primary);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; bottom: 0; left: 0;
+      overflow-y: auto;
+      z-index: 100;
+      transition: transform 0.3s ease;
+    }
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 1.5rem 1.25rem;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .sidebar-logo-icon {
+      width: 36px; height: 36px;
+      background: rgba(213,141,75,0.15);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-size: 1.1rem;
+    }
+    .sidebar-logo-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.2;
+    }
+    .sidebar-logo-sub { font-size: 0.68rem; color: rgba(213,141,75,0.7); font-family: 'Inter', sans-serif; font-weight: 400; }
+    nav.sidebar-nav { flex: 1; padding: 1rem 0; }
+    .nav-section-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      padding: 0.6rem 1.25rem 0.3rem;
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.62rem 1.25rem;
+      color: rgba(255,255,255,0.7);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      border-left: 3px solid transparent;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .nav-link:hover, .nav-link.active {
+      color: var(--accent);
+      background: rgba(213,141,75,0.08);
+      border-left-color: var(--accent);
+    }
+    .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+    .sidebar-footer {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.35);
+    }
+    .sidebar-footer a { color: rgba(213,141,75,0.7); text-decoration: none; }
+    .sidebar-footer a:hover { color: var(--accent); }
+
+    /* ===== MAIN CONTENT ===== */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ===== TOP BAR ===== */
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      padding: 0.85rem 1.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 1rem; }
+    .topbar-title { font-weight: 600; font-size: 1rem; color: var(--text); }
+
+    /* Status badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.9rem;
+      border-radius: 50px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .status-badge.coming-soon {
+      background: rgba(213,141,75,0.15);
+      color: #9a5e00;
+      border: 1px solid rgba(213,141,75,0.35);
+    }
+    .status-badge.launched {
+      background: rgba(22,163,74,0.12);
+      color: var(--success);
+      border: 1px solid rgba(22,163,74,0.3);
+    }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .status-badge.coming-soon .status-dot { background: var(--accent); animation: blink 1.5s infinite; }
+    .status-badge.launched .status-dot { background: var(--success); }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .topbar-right { display: flex; align-items: center; gap: 1rem; }
+    .topbar-user { font-size: 0.82rem; color: var(--text-mid); }
+    .btn-logout {
+      font-size: 0.8rem;
+      color: #c0392b;
+      padding: 0.3rem 0.75rem;
+      border: 1px solid rgba(192,57,43,0.3);
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-logout:hover { background: #c0392b; color: #fff; }
+    .btn-preview {
+      font-size: 0.8rem;
+      color: var(--primary);
+      padding: 0.3rem 0.75rem;
+      border: 1px solid rgba(31,6,6,0.3);
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-preview:hover { background: var(--primary); color: #fff; }
+
+    /* ===== CONTENT AREA ===== */
+    .content { padding: 1.75rem; max-width: 960px; }
+
+    /* ===== OVERVIEW CARDS ===== */
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .overview-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 1.25rem 1.25rem;
+      border: 1px solid var(--border);
+    }
+    .overview-card-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-light); font-weight: 600; margin-bottom: 0.3rem; }
+    .overview-card-value { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+    .overview-card-sub { font-size: 0.75rem; color: var(--text-light); margin-top: 0.2rem; }
+
+    /* ===== FORM SECTIONS ===== */
+    .form-section {
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .form-section-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+    .form-section-header:hover { background: #fdf8f0; }
+    .form-section-title {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .form-section-icon { font-size: 1rem; }
+    .section-toggle-icon { color: var(--text-light); transition: transform 0.2s; font-size: 0.85rem; }
+    .form-section.open .section-toggle-icon { transform: rotate(180deg); }
+    .form-section-body { padding: 1.5rem; display: none; }
+    .form-section.open .form-section-body { display: block; }
+
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 640px) { .field-grid { grid-template-columns: 1fr; } }
+    .field-full { grid-column: 1 / -1; }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-mid);
+      margin-bottom: 0.35rem;
+      letter-spacing: 0.03em;
+    }
+    input[type="text"], input[type="url"], input[type="email"],
+    input[type="date"], input[type="time"], input[type="number"],
+    select, textarea {
+      width: 100%;
+      padding: 0.6rem 0.85rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      background: #fdf8f0;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 90px; }
+    input[type="color"] {
+      width: 52px; height: 36px;
+      padding: 2px 4px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      cursor: pointer;
+      background: #fff;
+    }
+    .color-field { display: flex; gap: 0.5rem; align-items: center; }
+    .color-field input[type="text"] { flex: 1; }
+    .field-hint { font-size: 0.72rem; color: var(--text-light); margin-top: 0.25rem; }
+
+    /* Toggle switch */
+    .toggle-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #f0e8e0;
+    }
+    .toggle-group:last-child { border-bottom: none; }
+    .toggle-label { font-size: 0.88rem; font-weight: 500; color: var(--text); }
+    .toggle-sublabel { font-size: 0.75rem; color: var(--text-light); margin-top: 0.15rem; }
+    .toggle-switch { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #ddd;
+      border-radius: 26px;
+      transition: 0.25s;
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      height: 20px; width: 20px;
+      left: 3px; top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.25s;
+    }
+    .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); }
+
+    /* Launch status radio */
+    .status-radio-group { display: flex; gap: 1rem; margin-top: 0.5rem; }
+    .status-radio {
+      flex: 1;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .status-radio:has(input:checked) { border-color: var(--accent); background: #fff9f2; }
+    .status-radio input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+    .status-radio-label { font-weight: 700; font-size: 0.9rem; display: block; margin-top: 0.35rem; }
+    .status-radio-sub { font-size: 0.75rem; color: var(--text-light); margin-top: 0.2rem; }
+    .status-radio.danger { border-color: transparent; }
+    .status-radio.danger:has(input:checked) { border-color: var(--error); background: #fff5f5; }
+
+    /* Save button */
+    .save-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+      background: var(--cream);
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .save-hint { font-size: 0.78rem; color: var(--text-light); }
+    .btn-save {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1.5rem;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .btn-save:hover { background: var(--primary-h); box-shadow: 0 4px 14px rgba(31,6,6,0.3); }
+    .btn-save:disabled { background: #aaa; cursor: not-allowed; box-shadow: none; }
+
+    /* Toast notification */
+    #toast {
+      position: fixed;
+      bottom: 1.5rem; right: 1.5rem;
+      padding: 0.85rem 1.25rem;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      max-width: 320px;
+      z-index: 9999;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: transform 0.35s ease, opacity 0.35s ease;
+      pointer-events: none;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.success { background: #16a34a; color: #fff; }
+    #toast.error   { background: #dc2626; color: #fff; }
+
+    /* Warning box */
+    .warning-box {
+      background: #fff8e6;
+      border: 1px solid #f5d090;
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+      font-size: 0.82rem;
+      color: #7a4e00;
+      margin-bottom: 1rem;
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-start;
+    }
+
+    /* Preview frame */
+    #preview-wrap {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+    }
+    #preview-wrap.open { display: flex; }
+    .preview-modal {
+      width: 95vw;
+      height: 90vh;
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .preview-modal-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.25rem;
+      background: var(--primary);
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .preview-modal-bar button {
+      background: none;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+    #preview-frame { flex: 1; border: none; width: 100%; }
+
+    /* Confirmation dialog */
+    #confirm-dialog {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    #confirm-dialog.open { display: flex; }
+    .confirm-box {
+      background: #fff;
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 440px;
+      width: 90%;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+    }
+    .confirm-icon { font-size: 2.5rem; text-align: center; margin-bottom: 0.75rem; }
+    .confirm-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 800; color: var(--error); text-align: center; margin-bottom: 0.5rem; }
+    .confirm-body { font-size: 0.88rem; color: var(--text-mid); text-align: center; line-height: 1.7; margin-bottom: 1.5rem; }
+    .confirm-btns { display: flex; gap: 0.75rem; }
+    .confirm-cancel { flex: 1; padding: 0.7rem; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; background: #fff; font-family: 'Inter', sans-serif; }
+    .confirm-proceed { flex: 1; padding: 0.7rem; border: none; border-radius: 8px; background: var(--error); color: #fff; font-size: 0.9rem; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .topbar { padding: 0.75rem 1rem; }
+      .content { padding: 1rem; }
+      .hamburger { display: flex !important; }
+    }
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      cursor: pointer;
+      padding: 4px;
+      background: none;
+      border: none;
+    }
+    .hamburger span { display: block; width: 22px; height: 2px; background: var(--text); border-radius: 2px; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar" id="sidebar" role="navigation" aria-label="Admin navigation">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon" aria-hidden="true">🛡</div>
+      <div>
+        <div class="sidebar-logo-text">Think4U Trust</div>
+        <div class="sidebar-logo-sub">Launch Page Admin</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Dashboard</div>
+      <a class="nav-link active" href="#overview" onclick="scrollTo('overview')">
+        <span class="nav-icon">📊</span> Overview
+      </a>
+      <a class="nav-link" href="/admin/preview" target="_blank" rel="noopener">
+        <span class="nav-icon">👁</span> Live Preview
+      </a>
+      <div class="nav-section-label" style="margin-top:0.75rem">Configuration</div>
+      <a class="nav-link" href="#branding" onclick="openSection('sec-branding')">
+        <span class="nav-icon">🎨</span> Branding
+      </a>
+      <a class="nav-link" href="#hero" onclick="openSection('sec-hero')">
+        <span class="nav-icon">🖼</span> Hero Section
+      </a>
+      <a class="nav-link" href="#launch" onclick="openSection('sec-launch')">
+        <span class="nav-icon">🚀</span> Launch Settings
+      </a>
+      <a class="nav-link" href="#content" onclick="openSection('sec-content')">
+        <span class="nav-icon">📝</span> Content
+      </a>
+      <a class="nav-link" href="#seo" onclick="openSection('sec-seo')">
+        <span class="nav-icon">🔍</span> SEO
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      Signed in as <strong>{{ admin_user }}</strong><br/>
+      <a href="/">View site</a> · <a href="/admin/logout">Logout</a>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+
+    <!-- Top bar -->
+    <header class="topbar" role="banner">
+      <div class="topbar-left">
+        <button class="hamburger" id="hamburger" aria-label="Toggle sidebar" onclick="document.getElementById('sidebar').classList.toggle('open')">
+          <span></span><span></span><span></span>
+        </button>
+        <span class="topbar-title">Launch Page Admin</span>
+        <div
+          class="status-badge {{ 'launched' if launch_status == 'launched' else 'coming-soon' }}"
+          id="status-badge"
+          role="status"
+          aria-live="polite"
+          aria-label="Current site status: {{ launch_status }}"
+        >
+          <span class="status-dot"></span>
+          {{ "🟢 LIVE" if launch_status == "launched" else "🟡 COMING SOON" }}
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-user">{{ admin_user }}</span>
+        <a href="/admin/preview" target="_blank" class="btn-preview" rel="noopener" aria-label="Open live preview in new tab">Preview</a>
+        <a href="/admin/logout" class="btn-logout" aria-label="Logout">Logout</a>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="content" id="overview">
+
+      <!-- Overview cards -->
+      <div class="overview-grid">
+        <div class="overview-card">
+          <div class="overview-card-label">Site Status</div>
+          <div class="overview-card-value" id="ov-status">{{ "🟢 Launched" if launch_status == "launched" else "🟡 Coming Soon" }}</div>
+        </div>
+        <div class="overview-card">
+          <div class="overview-card-label">Launch Date</div>
+          <div class="overview-card-value" style="font-size:0.9rem">{{ launch_display_dt }}</div>
+        </div>
+        <div class="overview-card">
+          <div class="overview-card-label">Countdown Target (UTC)</div>
+          <div class="overview-card-value" style="font-size:0.8rem;font-weight:500">{{ countdown_target }}</div>
+        </div>
+        <div class="overview-card">
+          <div class="overview-card-label">Auto Redirect</div>
+          <div class="overview-card-value">{{ "✅ Enabled" if config.launch.auto_redirect else "❌ Disabled" }}</div>
+        </div>
+      </div>
+
+      <!-- ===== MAIN FORM ===== -->
+      <form id="admin-form" novalidate>
+        <input type="hidden" name="csrf_token" id="form-csrf" value="{{ csrf_token }}"/>
+
+        <!-- ==== BRANDING ==== -->
+        <div class="form-section open" id="sec-branding">
+          <div class="form-section-header" onclick="toggleSection('sec-branding')" aria-expanded="true" role="button" tabindex="0">
+            <div class="form-section-title"><span class="form-section-icon">🎨</span> Branding</div>
+            <span class="section-toggle-icon">▼</span>
+          </div>
+          <div class="form-section-body">
+            <div class="field-grid">
+              <div>
+                <label for="org_name">Organisation Name</label>
+                <input type="text" id="org_name" name="org_name" value="{{ config.branding.org_name }}" required/>
+              </div>
+              <div>
+                <label for="tagline">Tagline</label>
+                <input type="text" id="tagline" name="tagline" value="{{ config.branding.tagline }}"/>
+              </div>
+              <div>
+                <label for="primary_color">Primary Colour</label>
+                <div class="color-field">
+                  <input type="color" id="primary_color_picker" value="{{ config.branding.primary_color }}" oninput="document.getElementById('primary_color').value=this.value"/>
+                  <input type="text" id="primary_color" name="primary_color" value="{{ config.branding.primary_color }}" placeholder="#1f0606" oninput="document.getElementById('primary_color_picker').value=this.value"/>
+                </div>
+              </div>
+              <div>
+                <label for="accent_color">Accent / Gold Colour</label>
+                <div class="color-field">
+                  <input type="color" id="accent_color_picker" value="{{ config.branding.accent_color }}" oninput="document.getElementById('accent_color').value=this.value"/>
+                  <input type="text" id="accent_color" name="accent_color" value="{{ config.branding.accent_color }}" placeholder="#d58d4b" oninput="document.getElementById('accent_color_picker').value=this.value"/>
+                </div>
+              </div>
+              <div>
+                <label for="logo_url">Logo URL</label>
+                <input type="text" id="logo_url" name="logo_url" value="{{ config.branding.logo_url }}" placeholder="/static/images/logo-white.png"/>
+                <p class="field-hint">Relative path or full URL to logo image</p>
+              </div>
+              <div>
+                <label for="favicon_url">Favicon URL</label>
+                <input type="text" id="favicon_url" name="favicon_url" value="{{ config.branding.favicon_url }}" placeholder="/static/images/favicon.ico"/>
+              </div>
+            </div>
+          </div>
+          <div class="save-bar">
+            <span class="save-hint">Changes are live once you save.</span>
+            <button type="button" class="btn-save" onclick="saveAll()">💾 Save Branding</button>
+          </div>
+        </div>
+
+        <!-- ==== HERO ==== -->
+        <div class="form-section" id="sec-hero">
+          <div class="form-section-header" onclick="toggleSection('sec-hero')" aria-expanded="false" role="button" tabindex="0">
+            <div class="form-section-title"><span class="form-section-icon">🖼</span> Hero Section</div>
+            <span class="section-toggle-icon">▼</span>
+          </div>
+          <div class="form-section-body">
+            <div class="field-grid">
+              <div class="field-full">
+                <label for="headline">Main Headline</label>
+                <input type="text" id="headline" name="headline" value="{{ config.hero.headline }}" required/>
+              </div>
+              <div class="field-full">
+                <label for="description">Supporting Description</label>
+                <textarea id="description" name="description">{{ config.hero.description }}</textarea>
+              </div>
+              <div>
+                <label for="cta_primary_text">Primary CTA Text</label>
+                <input type="text" id="cta_primary_text" name="cta_primary_text" value="{{ config.hero.cta_primary_text }}" placeholder="Stay Updated"/>
+              </div>
+              <div class="field-full">
+                <label for="launch_cta_note">Launch action</label>
+                <input id="launch_cta_note" value="The launch button runs the animation and opens https://think4u.org." disabled/>
+              </div>
+              <div>
+                <label for="cta_secondary_text">Secondary CTA Text</label>
+                <input type="text" id="cta_secondary_text" name="cta_secondary_text" value="{{ config.hero.cta_secondary_text }}"/>
+              </div>
+              <div>
+                <label for="cta_secondary_url">Secondary CTA URL</label>
+                <input type="url" id="cta_secondary_url" name="cta_secondary_url" value="{{ config.hero.cta_secondary_url }}" placeholder="https://think4u.org"/>
+              </div>
+              <div class="field-full">
+                <label for="hero_image_url">Hero Background Image URL (optional)</label>
+                <input type="url" id="hero_image_url" name="hero_image_url" value="{{ config.hero.hero_image_url }}" placeholder="https://..."/>
+                <p class="field-hint">Leave blank to use the default SVG pattern background.</p>
+              </div>
+            </div>
+          </div>
+          <div class="save-bar">
+            <span class="save-hint"></span>
+            <button type="button" class="btn-save" onclick="saveAll()">💾 Save Hero</button>
+          </div>
+        </div>
+
+        <!-- ==== LAUNCH SETTINGS ==== -->
+        <div class="form-section" id="sec-launch">
+          <div class="form-section-header" onclick="toggleSection('sec-launch')" aria-expanded="false" role="button" tabindex="0">
+            <div class="form-section-title"><span class="form-section-icon">🚀</span> Launch Settings</div>
+            <span class="section-toggle-icon">▼</span>
+          </div>
+          <div class="form-section-body">
+
+            <!-- Launch date/time -->
+            <div class="field-grid">
+              <div>
+                <label for="launch_date">Launch Date</label>
+                <input type="date" id="launch_date" name="launch_date" value="{{ config.launch.launch_date }}" required/>
+              </div>
+              <div>
+                <label for="launch_time">Launch Time (24h)</label>
+                <input type="time" id="launch_time" name="launch_time" value="{{ config.launch.launch_time }}" required/>
+              </div>
+              <div class="field-full">
+                <label for="timezone">Timezone</label>
+                <select id="timezone" name="timezone">
+                  {% for tz_val, tz_label in timezones %}
+                  <option value="{{ tz_val }}" {{ 'selected' if config.launch.timezone == tz_val else '' }}>{{ tz_label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <!-- Launch Status -->
+            <div style="margin-top:1.25rem; margin-bottom:1rem">
+              <label>Launch Status</label>
+              <div class="warning-box">
+                ⚠️ <span>Launch status changes the public message only. Visitors are redirected only after pressing the launch button.</span>
+              </div>
+              <div class="status-radio-group" role="radiogroup" aria-label="Launch status">
+                <label class="status-radio">
+                  <input type="radio" name="launch_status" value="coming_soon" id="status_coming_soon"
+                    {{ 'checked' if config.launch.launch_status == 'coming_soon' else '' }}
+                    onchange="onStatusChange(this)"/>
+                  <span style="font-size:1.5rem">🟡</span>
+                  <span class="status-radio-label">Coming Soon</span>
+                  <span class="status-radio-sub">Show launch page & countdown</span>
+                </label>
+                <label class="status-radio danger">
+                  <input type="radio" name="launch_status" value="launched" id="status_launched"
+                    {{ 'checked' if config.launch.launch_status == 'launched' else '' }}
+                    onchange="onStatusChange(this)"/>
+                  <span style="font-size:1.5rem">🟢</span>
+                  <span class="status-radio-label" style="color:#c0392b">LAUNCHED</span>
+                  <span class="status-radio-sub">Display the launch-ready message</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Toggles -->
+            <div style="margin-top:1rem">
+              <div class="toggle-group">
+                <div>
+                  <div class="toggle-label">Show Countdown Timer</div>
+                  <div class="toggle-sublabel">Displays the days/hours/minutes/seconds countdown on the public page.</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="countdown_visible" name="countdown_visible_chk"
+                    {{ 'checked' if config.launch.countdown_visible else '' }}
+                    onchange="document.getElementById('hid_countdown').value=this.checked?'true':'false'"/>
+                  <span class="toggle-slider"></span>
+                </label>
+                <input type="hidden" id="hid_countdown" name="countdown_visible" value="{{ 'true' if config.launch.countdown_visible else 'false' }}"/>
+              </div>
+              <div class="toggle-group">
+                <div>
+                  <div class="toggle-label">Launch Button: {{ 'ENABLED' if config.launch.get('launch_button_enabled', true) else 'DISABLED' }}</div>
+                  <div class="toggle-sublabel">When disabled, the page stays visible and the launch action is unavailable.</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="launch_button_enabled" name="launch_button_enabled_chk"
+                    {{ 'checked' if config.launch.get('launch_button_enabled', true) else '' }}
+                    onchange="document.getElementById('hid_launch_button').value=this.checked?'true':'false'"/>
+                  <span class="toggle-slider"></span>
+                </label>
+                <input type="hidden" id="hid_launch_button" name="launch_button_enabled" value="{{ 'true' if config.launch.get('launch_button_enabled', true) else 'false' }}"/>
+              </div>
+              <div class="field-grid" style="margin-top:1.1rem">
+                <div>
+                  <label for="redirect_url">Redirect destination (fixed)</label>
+                  <input type="url" id="redirect_url" name="redirect_url" value="https://think4u.org" readonly/>
+                  <p class="field-hint">The destination is fixed to the official Think4U website and validated when saved.</p>
+                </div>
+                <div>
+                  <label for="redirect_delay_seconds">Launch animation duration (seconds)</label>
+                  <input type="number" id="redirect_delay_seconds" name="redirect_delay_seconds" value="{{ config.launch.get('redirect_delay_seconds', 1.7) }}" min="1.2" max="2.5" step="0.1"/>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="save-bar">
+            <span class="save-hint">⚠️ Verify launch date/timezone before saving.</span>
+            <button type="button" class="btn-save" onclick="saveAll()">💾 Save Launch Settings</button>
+          </div>
+        </div>
+
+        <!-- ==== CONTENT ==== -->
+        <div class="form-section" id="sec-content">
+          <div class="form-section-header" onclick="toggleSection('sec-content')" aria-expanded="false" role="button" tabindex="0">
+            <div class="form-section-title"><span class="form-section-icon">📝</span> Content</div>
+            <span class="section-toggle-icon">▼</span>
+          </div>
+          <div class="form-section-body">
+            <div class="field-grid">
+              <div class="field-full">
+                <label for="mission_text">Mission / About Text</label>
+                <textarea id="mission_text" name="mission_text" rows="5">{{ config.content.mission_text }}</textarea>
+              </div>
+              <div>
+                <label for="contact_email">Contact Email</label>
+                <input type="email" id="contact_email" name="contact_email" value="{{ config.content.contact_email }}" placeholder="info@think4u.org"/>
+              </div>
+              <div>
+                <label for="contact_phone">Contact Phone</label>
+                <input type="text" id="contact_phone" name="contact_phone" value="{{ config.content.contact_phone }}" placeholder="+91 XXXXX XXXXX"/>
+              </div>
+              <div class="field-full">
+                <label for="contact_address">Address</label>
+                <input type="text" id="contact_address" name="contact_address" value="{{ config.content.contact_address }}"/>
+              </div>
+              <div>
+                <label for="social_facebook">Facebook URL</label>
+                <input type="url" id="social_facebook" name="social_facebook" value="{{ config.content.social_links.get('facebook','') }}" placeholder="https://facebook.com/..."/>
+              </div>
+              <div>
+                <label for="social_instagram">Instagram URL</label>
+                <input type="url" id="social_instagram" name="social_instagram" value="{{ config.content.social_links.get('instagram','') }}" placeholder="https://instagram.com/..."/>
+              </div>
+              <div>
+                <label for="social_twitter">Twitter / X URL</label>
+                <input type="url" id="social_twitter" name="social_twitter" value="{{ config.content.social_links.get('twitter','') }}" placeholder="https://twitter.com/..."/>
+              </div>
+              <div>
+                <label for="social_linkedin">LinkedIn URL</label>
+                <input type="url" id="social_linkedin" name="social_linkedin" value="{{ config.content.social_links.get('linkedin','') }}" placeholder="https://linkedin.com/company/..."/>
+              </div>
+              <div>
+                <label for="social_youtube">YouTube URL</label>
+                <input type="url" id="social_youtube" name="social_youtube" value="{{ config.content.social_links.get('youtube','') }}" placeholder="https://youtube.com/@..."/>
+              </div>
+            </div>
+          </div>
+          <div class="save-bar">
+            <span class="save-hint"></span>
+            <button type="button" class="btn-save" onclick="saveAll()">💾 Save Content</button>
+          </div>
+        </div>
+
+        <!-- ==== SEO ==== -->
+        <div class="form-section" id="sec-seo">
+          <div class="form-section-header" onclick="toggleSection('sec-seo')" aria-expanded="false" role="button" tabindex="0">
+            <div class="form-section-title"><span class="form-section-icon">🔍</span> SEO &amp; Social Sharing</div>
+            <span class="section-toggle-icon">▼</span>
+          </div>
+          <div class="form-section-body">
+            <div class="field-grid">
+              <div class="field-full">
+                <label for="page_title">Page Title (browser tab + Google)</label>
+                <input type="text" id="page_title" name="page_title" value="{{ config.seo.page_title }}" placeholder="Think4U Trust — Launching Soon"/>
+              </div>
+              <div class="field-full">
+                <label for="meta_description">Meta Description</label>
+                <textarea id="meta_description" name="meta_description" rows="2">{{ config.seo.meta_description }}</textarea>
+                <p class="field-hint">Keep under 160 characters for best SEO results.</p>
+              </div>
+              <div class="field-full">
+                <label for="og_title">Social Sharing Title (Open Graph)</label>
+                <input type="text" id="og_title" name="og_title" value="{{ config.seo.og_title }}"/>
+              </div>
+              <div class="field-full">
+                <label for="og_description">Social Sharing Description</label>
+                <textarea id="og_description" name="og_description" rows="2">{{ config.seo.og_description }}</textarea>
+              </div>
+              <div class="field-full">
+                <label for="og_image_url">Open Graph Image URL</label>
+                <input type="url" id="og_image_url" name="og_image_url" value="{{ config.seo.og_image_url }}" placeholder="/static/images/og-image.png"/>
+                <p class="field-hint">Recommended: 1200×630 pixels. This image appears when the link is shared on social media.</p>
+              </div>
+            </div>
+          </div>
+          <div class="save-bar">
+            <span class="save-hint"></span>
+            <button type="button" class="btn-save" onclick="saveAll()">💾 Save SEO</button>
+          </div>
+        </div>
+
+      </form><!-- end #admin-form -->
+
+    </main>
+  </div><!-- end .main -->
+</div><!-- end .layout -->
+
+<!-- Toast -->
+<div id="toast" role="alert" aria-live="assertive" aria-atomic="true"></div>
+
+<!-- Preview modal -->
+<div id="preview-wrap" role="dialog" aria-modal="true" aria-label="Launch page preview">
+  <div class="preview-modal">
+    <div class="preview-modal-bar">
+      <span>🔍 Live Preview — <em>Not yet saved changes may not appear</em></span>
+      <button onclick="closePreview()" aria-label="Close preview">✕</button>
+    </div>
+    <iframe id="preview-frame" src="/admin/preview" title="Launch page preview"></iframe>
+  </div>
+</div>
+
+<!-- Confirm dialog (for LAUNCHED toggle) -->
+<div id="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+  <div class="confirm-box">
+    <div class="confirm-icon">🚀</div>
+    <h2 class="confirm-title" id="confirm-title">Activate LAUNCHED Status?</h2>
+    <p class="confirm-body">
+      This will immediately redirect <strong>all visitors</strong> from the launch page to <strong>think4u.org</strong>.<br/><br/>
+      Only proceed if your main website is live and ready. This action takes effect as soon as you save.
+    </p>
+    <div class="confirm-btns">
+      <button class="confirm-cancel" onclick="cancelLaunch()">Cancel</button>
+      <button class="confirm-proceed" onclick="confirmLaunch()">Yes, Go Live!</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ====== Toggle sections ======
+  function toggleSection(id) {
+    const sec = document.getElementById(id);
+    sec.classList.toggle('open');
+    const hdr = sec.querySelector('.form-section-header');
+    if (hdr) hdr.setAttribute('aria-expanded', sec.classList.contains('open'));
+  }
+  function openSection(id) {
+    const sec = document.getElementById(id);
+    if (sec && !sec.classList.contains('open')) sec.classList.add('open');
+    setTimeout(() => { const el = document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); }, 50);
+  }
+
+  // ====== Save all ======
+  async function saveAll() {
+    const form   = document.getElementById('admin-form');
+    const data   = new FormData(form);
+    const btns   = document.querySelectorAll('.btn-save');
+    btns.forEach(b => { b.disabled = true; b.textContent = '⏳ Saving…'; });
+
+    try {
+      const resp = await fetch('/admin/save', { method: 'POST', body: data });
+      const json = await resp.json();
+      showToast(json.success ? '✅ ' + json.message : '❌ ' + json.message, json.success ? 'success' : 'error');
+      if (json.success) {
+        // Refresh status badge + overview
+        const stResp = await fetch('/admin/status');
+        const st = await stResp.json();
+        const badge = document.getElementById('status-badge');
+        const ov    = document.getElementById('ov-status');
+        if (badge) {
+          badge.className = 'status-badge ' + (st.launch_status === 'launched' ? 'launched' : 'coming-soon');
+          badge.innerHTML = '<span class="status-dot"></span>' + (st.launch_status === 'launched' ? '🟢 LIVE' : '🟡 COMING SOON');
+        }
+        if (ov) ov.textContent = st.launch_status === 'launched' ? '🟢 Launched' : '🟡 Coming Soon';
+      }
+    } catch(e) {
+      showToast('❌ Network error. Please try again.', 'error');
+    } finally {
+      btns.forEach(b => { b.disabled = false; b.textContent = b.textContent.replace('⏳ Saving…', '💾 Save'); });
+      btns.forEach(b => { if(b.textContent.trim() === '💾 Save') b.textContent = '💾 Save'; });
+    }
+  }
+
+  // ====== Toast ======
+  let toastTimer;
+  function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'show ' + type;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.className = type; }, 4000);
+  }
+
+  // ====== Launch status confirmation ======
+  let pendingLaunchValue = null;
+  function onStatusChange(radio) {
+    if (radio.value === 'launched') {
+      pendingLaunchValue = radio;
+      // Revert selection visually until confirmed
+      document.getElementById('status_coming_soon').checked = true;
+      document.getElementById('confirm-dialog').classList.add('open');
+    }
+  }
+  function confirmLaunch() {
+    if (pendingLaunchValue) { pendingLaunchValue.checked = true; pendingLaunchValue = null; }
+    document.getElementById('confirm-dialog').classList.remove('open');
+    showToast('⚠️ Status set to LAUNCHED. Press Save to apply.', 'success');
+  }
+  function cancelLaunch() {
+    pendingLaunchValue = null;
+    document.getElementById('status_coming_soon').checked = true;
+    document.getElementById('confirm-dialog').classList.remove('open');
+  }
+
+  // ====== Preview ======
+  function closePreview() {
+    document.getElementById('preview-wrap').classList.remove('open');
+  }
+  // Close on outside click
+  document.getElementById('preview-wrap').addEventListener('click', function(e){
+    if (e.target === this) closePreview();
+  });
+  // ESC key
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') { closePreview(); cancelLaunch(); }
+  });
+
+  // ====== Keyboard accessibility for section toggles ======
+  document.querySelectorAll('.form-section-header').forEach(function(hdr){
+    hdr.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); hdr.click(); }
+    });
+  });
+</script>
+</body>
+</html>
