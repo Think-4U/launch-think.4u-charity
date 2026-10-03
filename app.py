@@ -40,10 +40,16 @@ app.secret_key = configured_secret or secrets.token_hex(32)
 if not configured_secret and os.environ.get("VERCEL"):
     log.warning("SECRET_KEY is unset in Vercel. The public page remains available, but admin sessions will not survive function restarts. Set a stable SECRET_KEY in Project Settings.")
 
+same_site_input = os.environ.get("SESSION_COOKIE_SAMESITE", "Lax").strip().strip("\"'").lower()
+same_site_values = {"lax": "Lax", "strict": "Strict", "none": "None"}
+session_same_site = same_site_values.get(same_site_input, "Lax")
+if same_site_input not in same_site_values:
+    log.warning("Invalid SESSION_COOKIE_SAMESITE value; using Lax.")
+
 # Session cookie security
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE=os.environ.get("SESSION_COOKIE_SAMESITE", "Lax"),
+    SESSION_COOKIE_SAMESITE=session_same_site,
     SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE", "false").lower() == "true",
     PERMANENT_SESSION_LIFETIME=3600,  # 1 hour admin sessions
 )
