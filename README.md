@@ -13,7 +13,7 @@ Visitor → launch.think4u.org → presses LAUNCH THINK4U
            → https://think4u.org
 ```
 
-The page never redirects on load or when its optional launch-date countdown ends.
+The page has no pre-launch countdown and never redirects on page load.
 
 ---
 
@@ -119,23 +119,9 @@ ADMIN_USERNAME=your_username
 
 ---
 
-## 📅 Configuring Launch Date & Time
-
-1. Log in at `/admin/login`
-2. Go to **Launch Settings** in the dashboard
-3. Set:
-   - **Launch Date** (YYYY-MM-DD format)
-   - **Launch Time** (24-hour format, e.g., `09:00`)
-   - **Timezone** (e.g., `Asia/Kolkata`)
-4. Click **Save Launch Settings**
-
-The countdown on the public page updates immediately.
-
----
-
 ## 🚀 Launch interaction
 
-The launch button must be enabled in the admin dashboard. On click, the app authorizes a one-use launch token, plays a 10-second animation, then shows a success message with a 15-second countdown and a **Redirect now** link. The countdown finishing or visiting the page never starts a redirect.
+The launch button must be enabled in the admin dashboard. On click, the app authorizes a one-use launch token, plays a 10-second animation, then shows a success message with a 15-second countdown and a **Redirect now** link. The pre-launch page has no timer; visiting the page never starts a redirect.
 
 ---
 

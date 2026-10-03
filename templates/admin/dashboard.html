@@ -501,14 +501,6 @@
           <div class="overview-card-value">{{ "✅ Enabled" if config.launch.get('launch_button_enabled', true) else "⏸ Disabled" }}</div>
         </div>
         <div class="overview-card">
-          <div class="overview-card-label">Launch Date</div>
-          <div class="overview-card-value" style="font-size:0.9rem">{{ launch_display_dt }}</div>
-        </div>
-        <div class="overview-card">
-          <div class="overview-card-label">Countdown Target (UTC)</div>
-          <div class="overview-card-value" style="font-size:0.8rem;font-weight:500">{{ countdown_target }}</div>
-        </div>
-        <div class="overview-card">
           <div class="overview-card-label">Launch flow</div>
           <div class="overview-card-value">10s animation · 15s redirect</div>
         </div>
@@ -605,41 +597,8 @@
           </div>
           <div class="form-section-body">
 
-            <!-- Launch date/time -->
-            <div class="field-grid">
-              <div>
-                <label for="launch_date">Launch Date</label>
-                <input type="date" id="launch_date" name="launch_date" value="{{ config.launch.launch_date }}" required/>
-              </div>
-              <div>
-                <label for="launch_time">Launch Time (24h)</label>
-                <input type="time" id="launch_time" name="launch_time" value="{{ config.launch.launch_time }}" required/>
-              </div>
-              <div class="field-full">
-                <label for="timezone">Timezone</label>
-                <select id="timezone" name="timezone">
-                  {% for tz_val, tz_label in timezones %}
-                  <option value="{{ tz_val }}" {{ 'selected' if config.launch.timezone == tz_val else '' }}>{{ tz_label }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-            </div>
-
             <!-- Toggles -->
             <div style="margin-top:1rem">
-              <div class="toggle-group">
-                <div>
-                  <div class="toggle-label">Show Countdown Timer</div>
-                  <div class="toggle-sublabel">Displays the days/hours/minutes/seconds countdown on the public page.</div>
-                </div>
-                <label class="toggle-switch">
-                  <input type="checkbox" id="countdown_visible" name="countdown_visible_chk"
-                    {{ 'checked' if config.launch.countdown_visible else '' }}
-                    onchange="document.getElementById('hid_countdown').value=this.checked?'true':'false'"/>
-                  <span class="toggle-slider"></span>
-                </label>
-                <input type="hidden" id="hid_countdown" name="countdown_visible" value="{{ 'true' if config.launch.countdown_visible else 'false' }}"/>
-              </div>
               <div class="toggle-group">
                 <div>
                   <div class="toggle-label">Launch Button: {{ 'ENABLED' if config.launch.get('launch_button_enabled', true) else 'DISABLED' }}</div>
@@ -657,7 +616,7 @@
 
           </div>
           <div class="save-bar">
-            <span class="save-hint">⚠️ Verify launch date/timezone before saving.</span>
+            <span class="save-hint">The launch sequence runs when a visitor presses the launch button.</span>
             <button type="button" class="btn-save" onclick="saveAll()">💾 Save Launch Settings</button>
           </div>
         </div>

@@ -5,8 +5,6 @@ Handles loading, saving, and validating the launch_config.json file.
 
 import json
 import os
-import pytz
-from datetime import datetime
 from copy import deepcopy
 
 # Absolute path to the config file
@@ -40,10 +38,6 @@ DEFAULT_CONFIG = {
         "cta_primary_text": "LAUNCH THINK4U",
     },
     "launch": {
-        "launch_date": "2027-01-26",
-        "launch_time": "09:00",
-        "timezone": "Asia/Kolkata",
-        "countdown_visible": True,
         "launch_button_enabled": True,
         "redirect_url": "https://think4u.org",
         "redirect_delay_seconds": 15
@@ -112,20 +106,6 @@ def save_config(data: dict) -> tuple[bool, str]:
 
         # Basic validation
         launch = data.get("launch", {})
-        tz_name = launch.get("timezone", "Asia/Kolkata")
-        try:
-            pytz.timezone(tz_name)
-        except pytz.UnknownTimeZoneError:
-            return False, f"Unknown timezone: {tz_name}"
-
-        # Validate date/time format
-        launch_date = launch.get("launch_date", "")
-        launch_time = launch.get("launch_time", "")
-        try:
-            datetime.strptime(f"{launch_date} {launch_time}", "%Y-%m-%d %H:%M")
-        except ValueError:
-            return False, "Invalid launch date or time format."
-
         redirect_url = launch.get("redirect_url", "")
         if redirect_url != "https://think4u.org":
             return False, "The launch destination must be https://think4u.org."
@@ -143,71 +123,3 @@ def save_config(data: dict) -> tuple[bool, str]:
         return True, "Configuration saved successfully."
     except Exception as e:
         return False, f"Failed to save configuration: {e}"
-
-
-def get_countdown_target_utc(config: dict) -> str:
-    """
-    Return the launch datetime as a UTC ISO 8601 string for the JS countdown.
-    E.g. '2027-01-26T03:30:00Z'
-    """
-    launch = config.get("launch", {})
-    date_str = launch.get("launch_date", "2027-01-26")
-    time_str = launch.get("launch_time", "09:00")
-    tz_name  = launch.get("timezone", "Asia/Kolkata")
-
-    try:
-        tz = pytz.timezone(tz_name)
-        naive_dt = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
-        local_dt = tz.localize(naive_dt)
-        utc_dt   = local_dt.astimezone(pytz.utc)
-        return utc_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
-    except Exception:
-        # Safe fallback
-        return "2027-01-26T03:30:00Z"
-
-
-def get_display_launch_datetime(config: dict) -> str:
-    """
-    Return a human-readable launch datetime string for display on the page.
-    E.g. '26 January 2027 at 9:00 AM IST'
-    """
-    launch = config.get("launch", {})
-    date_str = launch.get("launch_date", "2027-01-26")
-    time_str = launch.get("launch_time", "09:00")
-    tz_name  = launch.get("timezone", "Asia/Kolkata")
-
-    try:
-        tz = pytz.timezone(tz_name)
-        naive_dt = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
-        local_dt = tz.localize(naive_dt)
-        tz_abbr  = local_dt.strftime("%Z")
-        # Use %d/%I and strip leading zero (cross-platform, works on Windows too)
-        day  = str(local_dt.day)
-        hour = str(local_dt.hour % 12 or 12)
-        ampm = local_dt.strftime("%p")
-        mins = local_dt.strftime("%M")
-        month_year = local_dt.strftime("%B %Y")
-        return f"{day} {month_year} at {hour}:{mins} {ampm} {tz_abbr}"
-    except Exception:
-        return f"{date_str} at {time_str} ({tz_name})"
-
-
-# Common timezones list for the admin dropdown
-COMMON_TIMEZONES = [
-    ("Asia/Kolkata",       "Asia/Kolkata (IST, UTC+5:30)"),
-    ("UTC",                "UTC"),
-    ("Asia/Dubai",         "Asia/Dubai (GST, UTC+4)"),
-    ("Asia/Singapore",     "Asia/Singapore (SGT, UTC+8)"),
-    ("Asia/Tokyo",         "Asia/Tokyo (JST, UTC+9)"),
-    ("Asia/Shanghai",      "Asia/Shanghai (CST, UTC+8)"),
-    ("Europe/London",      "Europe/London (GMT/BST)"),
-    ("Europe/Paris",       "Europe/Paris (CET/CEST)"),
-    ("Europe/Berlin",      "Europe/Berlin (CET/CEST)"),
-    ("America/New_York",   "America/New_York (ET)"),
-    ("America/Chicago",    "America/Chicago (CT)"),
-    ("America/Denver",     "America/Denver (MT)"),
-    ("America/Los_Angeles","America/Los_Angeles (PT)"),
-    ("America/Sao_Paulo",  "America/Sao_Paulo (BRT)"),
-    ("Australia/Sydney",   "Australia/Sydney (AEST/AEDT)"),
-    ("Pacific/Auckland",   "Pacific/Auckland (NZST/NZDT)"),
-]

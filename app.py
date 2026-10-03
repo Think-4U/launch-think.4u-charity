@@ -17,11 +17,7 @@ from flask import (
 )
 from dotenv import load_dotenv
 
-from config import (
-    load_config, save_config,
-    get_countdown_target_utc, get_display_launch_datetime,
-    COMMON_TIMEZONES, DEFAULT_CONFIG
-)
+from config import load_config, save_config
 
 # ---------------------------------------------------------------------------
 # Bootstrap
@@ -242,14 +238,9 @@ def _build_page_context(config: dict) -> dict:
         "headline":          h.get("headline", "A More Meaningful Future Begins Here."),
         "description":       h.get("description", ""),
         "cta_primary_text":  h.get("cta_primary_text", "LAUNCH THINK4U"),
-        # Countdown
-        "countdown_visible":    lc.get("countdown_visible", True),
-        "countdown_target_utc": get_countdown_target_utc(config),
-        "launch_display_dt":    get_display_launch_datetime(config),
         "redirect_url":         lc.get("redirect_url", "https://think4u.org"),
         "redirect_delay":       15,
         "launch_button_enabled":lc.get("launch_button_enabled", True),
-        "timezone":             lc.get("timezone", "Asia/Kolkata"),
         # Content
         "mission_text":    co.get("mission_text", ""),
         "contact_email":   co.get("contact_email", ""),
@@ -331,9 +322,6 @@ def admin_dashboard():
     config = load_config()
     ctx = {
         "config":           config,
-        "timezones":        COMMON_TIMEZONES,
-        "countdown_target": get_countdown_target_utc(config),
-        "launch_display_dt":get_display_launch_datetime(config),
         "admin_user":       session.get("admin_user", "admin"),
     }
     return render_template("admin/dashboard.html", **ctx)
@@ -364,10 +352,6 @@ def admin_save():
             "cta_primary_text":   form.get("cta_primary_text", "").strip(),
         },
         "launch": {
-            "launch_date":           form.get("launch_date", "").strip(),
-            "launch_time":           form.get("launch_time", "").strip(),
-            "timezone":              form.get("timezone", "Asia/Kolkata").strip(),
-            "countdown_visible":     form.get("countdown_visible") == "true",
             "launch_button_enabled": form.get("launch_button_enabled") == "true",
             "redirect_url":          "https://think4u.org",
             "redirect_delay_seconds":15,
