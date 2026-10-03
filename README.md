@@ -1,20 +1,19 @@
 # Think4U Trust — Launch Page
 
-A premium, production-ready **"Coming Soon" launch page** for Think4U Trust. Features a stunning NGO-branded design, admin-configurable countdown timer, secure admin dashboard, and server-side launch-status gating.
+A polished official launch page for Think4U Trust with a button-triggered launch animation, secure admin dashboard, and configurable branding.
 
 ---
 
 ## 🌐 How It Works
 
 ```
-Visitor → launch.think4u.org
-           │
-           ▼ (server checks launch_status)
-           ├── COMING_SOON → Show launch page with countdown
-           └── LAUNCHED    → HTTP 302 redirect to https://think4u.org
+Visitor → launch.think4u.org → presses LAUNCH THINK4U
+           → 10-second launch animation → success screen
+           → 15-second countdown, or “Redirect now”
+           → https://think4u.org
 ```
 
-The redirect is **server-side (HTTP 302)** — it works even with JavaScript disabled.
+The page never redirects on load or when its optional launch-date countdown ends.
 
 ---
 
@@ -84,6 +83,21 @@ Visit:
 
 ---
 
+## ▲ Deploying to Vercel
+
+Import this GitHub repository into Vercel and keep the project root as the Root Directory. Vercel detects the Flask app in `app.py`; `vercel.json` includes the Jinja templates and public images in its Python Function bundle. The site logo and favicon are served from `public/`.
+
+Add these Environment Variables in Vercel Project Settings for Production (and Preview if needed):
+
+- `SECRET_KEY`: a long random secret used to sign admin sessions.
+- `ADMIN_USERNAME`: the administrator login name.
+- `ADMIN_PASSWORD_HASH`: generate with `python scripts/hash_password.py` and paste the bcrypt hash.
+- `SESSION_COOKIE_SECURE`: `true`.
+
+The launch page runs without extra services. Vercel Functions have ephemeral writable storage: admin changes written to `/tmp/think4u-launch-config.json` can be lost between function instances or deployments. For admin configuration that must persist, connect a durable external database or object store before relying on dashboard edits. The in-memory login and launch rate limits also reset with function instances, so use an edge/WAF rate limit for deployment-wide enforcement.
+
+---
+
 ## 🔐 Admin Setup
 
 ### Changing the Admin Password
@@ -119,18 +133,9 @@ The countdown on the public page updates immediately.
 
 ---
 
-## 🟢 Activating the Final Launch (Go Live)
+## 🚀 Launch interaction
 
-When you are ready to launch:
-
-1. Ensure `https://think4u.org` is live and accessible
-2. Log in to the admin dashboard
-3. In **Launch Settings**, select **LAUNCHED** status
-4. Confirm the dialog ("Yes, Go Live!")
-5. Click **Save Launch Settings**
-6. All visitors to the launch page will now be redirected to `https://think4u.org`
-
-> To revert: set Launch Status back to **Coming Soon** and save.
+The launch button must be enabled in the admin dashboard. On click, the app authorizes a one-use launch token, plays a 10-second animation, then shows a success message with a 15-second countdown and a **Redirect now** link. The countdown finishing or visiting the page never starts a redirect.
 
 ---
 
@@ -148,13 +153,10 @@ launch think4u/
 ├── runtime.txt               # Python version
 ├── data/
 │   └── launch_config.json    # Admin-saved configuration (auto-created)
-├── static/
-│   ├── css/style.css         # Supplemental animations
-│   ├── js/countdown.js       # Vanilla JS countdown
-│   └── images/               # Logo, favicon, OG image
-│       ├── logo-white.png    # ← Place your logo here
-│       ├── favicon.ico       # ← Place your favicon here
-│       └── og-image.png      # ← Place your OG image here (1200×630)
+├── public/
+│   └── images/               # Vercel-served logo and favicon
+│       ├── logo-white.png
+│       └── favicon.ico
 ├── templates/
 │   ├── launch.html           # Public launch page
 │   └── admin/
@@ -170,7 +172,7 @@ launch think4u/
 
 Place your logo file at:
 ```
-static/images/logo-white.png
+public/images/logo-white.png
 ```
 
 Or upload to any hosting (e.g., Supabase storage) and update the **Logo URL** field in the admin dashboard under **Branding**.
@@ -252,7 +254,9 @@ launch.think4u.org  →  your-app.onrender.com
 | Rate limiting | 5 attempts / 15-min lockout (in-memory) |
 | Security headers | X-Frame-Options, X-Content-Type, Referrer-Policy |
 | Session | HTTPOnly, SameSite=Lax, Secure in production |
-| Launch gate | Server-side HTTP 302 redirect (not JS-only) |
+| Launch action | Short-lived, one-use token and request throttling |
+| Redirect destination | Fixed and validated as `https://think4u.org` |
+| Response headers | Content Security Policy, frame, MIME, referrer, and permissions policies |
 
 ---
 
@@ -281,9 +285,9 @@ launch.think4u.org  →  your-app.onrender.com
 - [ ] Admin login locks after 5 failed attempts
 - [ ] Admin save updates config
 - [ ] Admin preview shows live page
-- [ ] Launch status toggle requires confirmation
-- [ ] Switching to LAUNCHED redirects visitors
-- [ ] Switching back to COMING SOON shows launch page again
+- [ ] Launch button can be disabled in the admin dashboard
+- [ ] A launch token cannot be replayed
+- [ ] Visitors can manually choose Redirect now
 - [ ] SEO meta tags visible in page source
 - [ ] OG image tag set correctly
 - [ ] Social media links open correctly

@@ -11,7 +11,12 @@ from copy import deepcopy
 
 # Absolute path to the config file
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_PATH = os.path.join(BASE_DIR, "data", "launch_config.json")
+DEFAULT_CONFIG_PATH = (
+    os.path.join("/tmp", "think4u-launch-config.json")
+    if os.environ.get("VERCEL")
+    else os.path.join(BASE_DIR, "data", "launch_config.json")
+)
+CONFIG_PATH = os.environ.get("DATA_PATH", DEFAULT_CONFIG_PATH)
 
 # ---------------------------------------------------------------------------
 # Default configuration — used when no config file exists yet
@@ -22,8 +27,8 @@ DEFAULT_CONFIG = {
         "tagline": "Empowering Communities, Transforming Lives",
         "primary_color": "#1f0606",
         "accent_color": "#d58d4b",
-        "logo_url": "/static/images/logo-white.png",
-        "favicon_url": "/static/images/favicon.ico"
+        "logo_url": "/images/logo-white.png",
+        "favicon_url": "/images/favicon.ico"
     },
     "hero": {
         "headline": "A More Meaningful Future Begins Here.",
@@ -33,22 +38,15 @@ DEFAULT_CONFIG = {
             "extraordinary — a digital platform to connect compassion with action."
         ),
         "cta_primary_text": "LAUNCH THINK4U",
-        "cta_primary_url": "#contact",
-        "cta_secondary_text": "Learn About Think4U",
-        "cta_secondary_url": "https://think4u.org",
-        "hero_image_url": ""
     },
     "launch": {
         "launch_date": "2027-01-26",
         "launch_time": "09:00",
         "timezone": "Asia/Kolkata",
-        "launch_status": "coming_soon",   # 'coming_soon' | 'launched'
         "countdown_visible": True,
         "launch_button_enabled": True,
-        "auto_redirect": False,
         "redirect_url": "https://think4u.org",
-        "redirect_delay_seconds": 1.7,
-        "animation_style": "orbit"
+        "redirect_delay_seconds": 15
     },
     "content": {
         "mission_text": (
@@ -75,7 +73,7 @@ DEFAULT_CONFIG = {
             "support education, health, and social impact across India. "
             "Discover the mission and launch of Think4U Trust."
         ),
-        "og_image_url": "/static/images/og-image.png",
+        "og_image_url": "/images/logo-white.png",
         "og_title": "Think4U Trust — Official Launch",
         "og_description": (
             "A new chapter in community-driven social impact. "
@@ -128,20 +126,16 @@ def save_config(data: dict) -> tuple[bool, str]:
         except ValueError:
             return False, "Invalid launch date or time format."
 
-        # Only the user-initiated launch button may navigate visitors away.
-        if launch.get("launch_status") not in ("coming_soon", "launched"):
-            return False, "Invalid launch_status value."
-
         redirect_url = launch.get("redirect_url", "")
         if redirect_url != "https://think4u.org":
             return False, "The launch destination must be https://think4u.org."
 
         try:
-            delay = float(launch.get("redirect_delay_seconds", 1.7))
-            if not 1.2 <= delay <= 2.5:
-                return False, "Launch animation duration must be between 1.2 and 2.5 seconds."
+            delay = float(launch.get("redirect_delay_seconds", 15))
+            if delay != 15:
+                return False, "The success screen redirect countdown is fixed at 15 seconds."
         except (TypeError, ValueError):
-            return False, "Invalid launch animation duration."
+            return False, "Invalid automatic redirect delay."
 
         with open(CONFIG_PATH, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
@@ -149,11 +143,6 @@ def save_config(data: dict) -> tuple[bool, str]:
         return True, "Configuration saved successfully."
     except Exception as e:
         return False, f"Failed to save configuration: {e}"
-
-
-def get_launch_status(config: dict) -> str:
-    """Return 'coming_soon' or 'launched'."""
-    return config.get("launch", {}).get("launch_status", "coming_soon")
 
 
 def get_countdown_target_utc(config: dict) -> str:

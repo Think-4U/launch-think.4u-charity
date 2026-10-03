@@ -303,24 +303,6 @@
     .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
     .toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); }
 
-    /* Launch status radio */
-    .status-radio-group { display: flex; gap: 1rem; margin-top: 0.5rem; }
-    .status-radio {
-      flex: 1;
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      padding: 1rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: center;
-    }
-    .status-radio:has(input:checked) { border-color: var(--accent); background: #fff9f2; }
-    .status-radio input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
-    .status-radio-label { font-weight: 700; font-size: 0.9rem; display: block; margin-top: 0.35rem; }
-    .status-radio-sub { font-size: 0.75rem; color: var(--text-light); margin-top: 0.2rem; }
-    .status-radio.danger { border-color: transparent; }
-    .status-radio.danger:has(input:checked) { border-color: var(--error); background: #fff5f5; }
-
     /* Save button */
     .save-bar {
       display: flex;
@@ -425,32 +407,6 @@
     }
     #preview-frame { flex: 1; border: none; width: 100%; }
 
-    /* Confirmation dialog */
-    #confirm-dialog {
-      position: fixed;
-      inset: 0;
-      z-index: 300;
-      background: rgba(0,0,0,0.5);
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
-    #confirm-dialog.open { display: flex; }
-    .confirm-box {
-      background: #fff;
-      border-radius: 20px;
-      padding: 2rem;
-      max-width: 440px;
-      width: 90%;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.4);
-    }
-    .confirm-icon { font-size: 2.5rem; text-align: center; margin-bottom: 0.75rem; }
-    .confirm-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 800; color: var(--error); text-align: center; margin-bottom: 0.5rem; }
-    .confirm-body { font-size: 0.88rem; color: var(--text-mid); text-align: center; line-height: 1.7; margin-bottom: 1.5rem; }
-    .confirm-btns { display: flex; gap: 0.75rem; }
-    .confirm-cancel { flex: 1; padding: 0.7rem; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; background: #fff; font-family: 'Inter', sans-serif; }
-    .confirm-proceed { flex: 1; padding: 0.7rem; border: none; border-radius: 8px; background: var(--error); color: #fff; font-size: 0.9rem; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; }
-
     /* Responsive */
     @media (max-width: 768px) {
       .sidebar { transform: translateX(-100%); }
@@ -526,16 +482,7 @@
           <span></span><span></span><span></span>
         </button>
         <span class="topbar-title">Launch Page Admin</span>
-        <div
-          class="status-badge {{ 'launched' if launch_status == 'launched' else 'coming-soon' }}"
-          id="status-badge"
-          role="status"
-          aria-live="polite"
-          aria-label="Current site status: {{ launch_status }}"
-        >
-          <span class="status-dot"></span>
-          {{ "🟢 LIVE" if launch_status == "launched" else "🟡 COMING SOON" }}
-        </div>
+        <div class="status-badge coming-soon" role="status"><span class="status-dot"></span> LAUNCH PAGE</div>
       </div>
       <div class="topbar-right">
         <span class="topbar-user">{{ admin_user }}</span>
@@ -550,8 +497,8 @@
       <!-- Overview cards -->
       <div class="overview-grid">
         <div class="overview-card">
-          <div class="overview-card-label">Site Status</div>
-          <div class="overview-card-value" id="ov-status">{{ "🟢 Launched" if launch_status == "launched" else "🟡 Coming Soon" }}</div>
+          <div class="overview-card-label">Launch Button</div>
+          <div class="overview-card-value">{{ "✅ Enabled" if config.launch.get('launch_button_enabled', true) else "⏸ Disabled" }}</div>
         </div>
         <div class="overview-card">
           <div class="overview-card-label">Launch Date</div>
@@ -562,8 +509,8 @@
           <div class="overview-card-value" style="font-size:0.8rem;font-weight:500">{{ countdown_target }}</div>
         </div>
         <div class="overview-card">
-          <div class="overview-card-label">Auto Redirect</div>
-          <div class="overview-card-value">{{ "✅ Enabled" if config.launch.auto_redirect else "❌ Disabled" }}</div>
+          <div class="overview-card-label">Launch flow</div>
+          <div class="overview-card-value">10s animation · 15s redirect</div>
         </div>
       </div>
 
@@ -603,12 +550,12 @@
               </div>
               <div>
                 <label for="logo_url">Logo URL</label>
-                <input type="text" id="logo_url" name="logo_url" value="{{ config.branding.logo_url }}" placeholder="/static/images/logo-white.png"/>
+                <input type="text" id="logo_url" name="logo_url" value="{{ config.branding.logo_url }}" placeholder="/images/logo-white.png"/>
                 <p class="field-hint">Relative path or full URL to logo image</p>
               </div>
               <div>
                 <label for="favicon_url">Favicon URL</label>
-                <input type="text" id="favicon_url" name="favicon_url" value="{{ config.branding.favicon_url }}" placeholder="/static/images/favicon.ico"/>
+                <input type="text" id="favicon_url" name="favicon_url" value="{{ config.branding.favicon_url }}" placeholder="/images/favicon.ico"/>
               </div>
             </div>
           </div>
@@ -641,19 +588,6 @@
               <div class="field-full">
                 <label for="launch_cta_note">Launch action</label>
                 <input id="launch_cta_note" value="The launch button runs the animation and opens https://think4u.org." disabled/>
-              </div>
-              <div>
-                <label for="cta_secondary_text">Secondary CTA Text</label>
-                <input type="text" id="cta_secondary_text" name="cta_secondary_text" value="{{ config.hero.cta_secondary_text }}"/>
-              </div>
-              <div>
-                <label for="cta_secondary_url">Secondary CTA URL</label>
-                <input type="url" id="cta_secondary_url" name="cta_secondary_url" value="{{ config.hero.cta_secondary_url }}" placeholder="https://think4u.org"/>
-              </div>
-              <div class="field-full">
-                <label for="hero_image_url">Hero Background Image URL (optional)</label>
-                <input type="url" id="hero_image_url" name="hero_image_url" value="{{ config.hero.hero_image_url }}" placeholder="https://..."/>
-                <p class="field-hint">Leave blank to use the default SVG pattern background.</p>
               </div>
             </div>
           </div>
@@ -691,32 +625,6 @@
               </div>
             </div>
 
-            <!-- Launch Status -->
-            <div style="margin-top:1.25rem; margin-bottom:1rem">
-              <label>Launch Status</label>
-              <div class="warning-box">
-                ⚠️ <span>Launch status changes the public message only. Visitors are redirected only after pressing the launch button.</span>
-              </div>
-              <div class="status-radio-group" role="radiogroup" aria-label="Launch status">
-                <label class="status-radio">
-                  <input type="radio" name="launch_status" value="coming_soon" id="status_coming_soon"
-                    {{ 'checked' if config.launch.launch_status == 'coming_soon' else '' }}
-                    onchange="onStatusChange(this)"/>
-                  <span style="font-size:1.5rem">🟡</span>
-                  <span class="status-radio-label">Coming Soon</span>
-                  <span class="status-radio-sub">Show launch page & countdown</span>
-                </label>
-                <label class="status-radio danger">
-                  <input type="radio" name="launch_status" value="launched" id="status_launched"
-                    {{ 'checked' if config.launch.launch_status == 'launched' else '' }}
-                    onchange="onStatusChange(this)"/>
-                  <span style="font-size:1.5rem">🟢</span>
-                  <span class="status-radio-label" style="color:#c0392b">LAUNCHED</span>
-                  <span class="status-radio-sub">Display the launch-ready message</span>
-                </label>
-              </div>
-            </div>
-
             <!-- Toggles -->
             <div style="margin-top:1rem">
               <div class="toggle-group">
@@ -744,17 +652,6 @@
                   <span class="toggle-slider"></span>
                 </label>
                 <input type="hidden" id="hid_launch_button" name="launch_button_enabled" value="{{ 'true' if config.launch.get('launch_button_enabled', true) else 'false' }}"/>
-              </div>
-              <div class="field-grid" style="margin-top:1.1rem">
-                <div>
-                  <label for="redirect_url">Redirect destination (fixed)</label>
-                  <input type="url" id="redirect_url" name="redirect_url" value="https://think4u.org" readonly/>
-                  <p class="field-hint">The destination is fixed to the official Think4U website and validated when saved.</p>
-                </div>
-                <div>
-                  <label for="redirect_delay_seconds">Launch animation duration (seconds)</label>
-                  <input type="number" id="redirect_delay_seconds" name="redirect_delay_seconds" value="{{ config.launch.get('redirect_delay_seconds', 1.7) }}" min="1.2" max="2.5" step="0.1"/>
-                </div>
               </div>
             </div>
 
@@ -844,7 +741,7 @@
               </div>
               <div class="field-full">
                 <label for="og_image_url">Open Graph Image URL</label>
-                <input type="url" id="og_image_url" name="og_image_url" value="{{ config.seo.og_image_url }}" placeholder="/static/images/og-image.png"/>
+                <input type="url" id="og_image_url" name="og_image_url" value="{{ config.seo.og_image_url }}" placeholder="https://... (1200×630 recommended)"/>
                 <p class="field-hint">Recommended: 1200×630 pixels. This image appears when the link is shared on social media.</p>
               </div>
             </div>
@@ -875,22 +772,6 @@
   </div>
 </div>
 
-<!-- Confirm dialog (for LAUNCHED toggle) -->
-<div id="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
-  <div class="confirm-box">
-    <div class="confirm-icon">🚀</div>
-    <h2 class="confirm-title" id="confirm-title">Activate LAUNCHED Status?</h2>
-    <p class="confirm-body">
-      This will immediately redirect <strong>all visitors</strong> from the launch page to <strong>think4u.org</strong>.<br/><br/>
-      Only proceed if your main website is live and ready. This action takes effect as soon as you save.
-    </p>
-    <div class="confirm-btns">
-      <button class="confirm-cancel" onclick="cancelLaunch()">Cancel</button>
-      <button class="confirm-proceed" onclick="confirmLaunch()">Yes, Go Live!</button>
-    </div>
-  </div>
-</div>
-
 <script>
   // ====== Toggle sections ======
   function toggleSection(id) {
@@ -916,18 +797,6 @@
       const resp = await fetch('/admin/save', { method: 'POST', body: data });
       const json = await resp.json();
       showToast(json.success ? '✅ ' + json.message : '❌ ' + json.message, json.success ? 'success' : 'error');
-      if (json.success) {
-        // Refresh status badge + overview
-        const stResp = await fetch('/admin/status');
-        const st = await stResp.json();
-        const badge = document.getElementById('status-badge');
-        const ov    = document.getElementById('ov-status');
-        if (badge) {
-          badge.className = 'status-badge ' + (st.launch_status === 'launched' ? 'launched' : 'coming-soon');
-          badge.innerHTML = '<span class="status-dot"></span>' + (st.launch_status === 'launched' ? '🟢 LIVE' : '🟡 COMING SOON');
-        }
-        if (ov) ov.textContent = st.launch_status === 'launched' ? '🟢 Launched' : '🟡 Coming Soon';
-      }
     } catch(e) {
       showToast('❌ Network error. Please try again.', 'error');
     } finally {
@@ -946,26 +815,6 @@
     toastTimer = setTimeout(() => { t.className = type; }, 4000);
   }
 
-  // ====== Launch status confirmation ======
-  let pendingLaunchValue = null;
-  function onStatusChange(radio) {
-    if (radio.value === 'launched') {
-      pendingLaunchValue = radio;
-      // Revert selection visually until confirmed
-      document.getElementById('status_coming_soon').checked = true;
-      document.getElementById('confirm-dialog').classList.add('open');
-    }
-  }
-  function confirmLaunch() {
-    if (pendingLaunchValue) { pendingLaunchValue.checked = true; pendingLaunchValue = null; }
-    document.getElementById('confirm-dialog').classList.remove('open');
-    showToast('⚠️ Status set to LAUNCHED. Press Save to apply.', 'success');
-  }
-  function cancelLaunch() {
-    pendingLaunchValue = null;
-    document.getElementById('status_coming_soon').checked = true;
-    document.getElementById('confirm-dialog').classList.remove('open');
-  }
 
   // ====== Preview ======
   function closePreview() {
@@ -977,7 +826,7 @@
   });
   // ESC key
   document.addEventListener('keydown', function(e){
-    if (e.key === 'Escape') { closePreview(); cancelLaunch(); }
+    if (e.key === 'Escape') { closePreview(); }
   });
 
   // ====== Keyboard accessibility for section toggles ======

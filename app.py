@@ -18,7 +18,7 @@ from flask import (
 from dotenv import load_dotenv
 
 from config import (
-    load_config, save_config, get_launch_status,
+    load_config, save_config,
     get_countdown_target_utc, get_display_launch_datetime,
     COMMON_TIMEZONES, DEFAULT_CONFIG
 )
@@ -34,7 +34,7 @@ logging.basicConfig(
 )
 log = logging.getLogger("think4u.launch")
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="public", static_url_path="")
 app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 
 # Session cookie security
@@ -45,6 +45,12 @@ app.config.update(
     PERMANENT_SESSION_LIFETIME=3600,  # 1 hour admin sessions
 )
 
+_launch_tokens: dict[str, float] = {}
+_launch_requests: dict[str, list[float]] = {}
+LAUNCH_TOKEN_TTL = 900
+LAUNCH_RATE_WINDOW = 60
+LAUNCH_RATE_LIMIT = 5
+
 # ---------------------------------------------------------------------------
 # Security headers middleware
 # ---------------------------------------------------------------------------
@@ -54,6 +60,8 @@ def add_security_headers(resp):
     resp.headers["X-Frame-Options"] = "SAMEORIGIN"
     resp.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     resp.headers["X-XSS-Protection"] = "1; mode=block"
+    resp.headers["Content-Security-Policy"] = "default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+    resp.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     return resp
 
 # ---------------------------------------------------------------------------
@@ -65,13 +73,8 @@ LOCKOUT_SECONDS    = 900  # 15 minutes
 
 
 def _get_client_ip() -> str:
-    """Get real IP, honouring common proxy headers."""
-    return (
-        request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
-        or request.headers.get("X-Real-IP", "")
-        or request.remote_addr
-        or "unknown"
-    )
+    """Use the socket peer address; forwarded headers are client-spoofable."""
+    return request.remote_addr or "unknown"
 
 
 def _is_locked_out(ip: str) -> tuple[bool, int]:
@@ -138,6 +141,34 @@ def _generate_csrf() -> str:
 def _validate_csrf(token: str) -> bool:
     return secrets.compare_digest(session.get("csrf_token", ""), token)
 
+
+def _allow_launch_request(ip: str) -> bool:
+    """Limit repeated launch handshakes from a client IP."""
+    now = time.time()
+    recent = [stamp for stamp in _launch_requests.get(ip, []) if now - stamp < LAUNCH_RATE_WINDOW]
+    if not recent:
+        _launch_requests.pop(ip, None)
+    if len(recent) >= LAUNCH_RATE_LIMIT:
+        _launch_requests[ip] = recent
+        return False
+    recent.append(now)
+    _launch_requests[ip] = recent
+    return True
+
+
+def _launch_response(config: dict):
+    now = time.time()
+    for old_token, expires_at in list(_launch_tokens.items()):
+        if expires_at <= now:
+            _launch_tokens.pop(old_token, None)
+    token = secrets.token_urlsafe(32)
+    _launch_tokens[token] = now + LAUNCH_TOKEN_TTL
+    context = _build_page_context(config)
+    context["launch_token"] = token
+    response = make_response(render_template("launch.html", **context))
+    response.set_cookie("launch_token", token, httponly=True, secure=app.config["SESSION_COOKIE_SECURE"], samesite="Lax", max_age=LAUNCH_TOKEN_TTL)
+    return response
+
 # ---------------------------------------------------------------------------
 # Context processor — make csrf token available in all templates
 # ---------------------------------------------------------------------------
@@ -156,12 +187,30 @@ def inject_globals():
 def index():
     """Render the launch page; visitors leave only after pressing its button."""
     config = load_config()
-    ctx = _build_page_context(config)
-    resp = make_response(render_template("launch.html", **ctx))
+    resp = _launch_response(config)
     # No-cache so status changes reflect immediately
     resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     resp.headers["Pragma"] = "no-cache"
     return resp
+
+
+@app.post("/launch/authorize")
+def authorize_launch():
+    """Consume a one-use launch token before showing launch animation."""
+    token = request.headers.get("X-Launch-Token", "")
+    cookie_token = request.cookies.get("launch_token", "")
+    if not token or not cookie_token or not secrets.compare_digest(token, cookie_token):
+        return jsonify({"success": False, "message": "Invalid launch session."}), 403
+    expires = _launch_tokens.pop(token, None)
+    if not expires or expires < time.time():
+        return jsonify({"success": False, "message": "This launch action has expired or was already used."}), 409
+    if not _allow_launch_request(_get_client_ip()):
+        return jsonify({"success": False, "message": "Please wait before trying again."}), 429
+    if not load_config().get("launch", {}).get("launch_button_enabled", True):
+        return jsonify({"success": False, "message": "The launch action is currently unavailable."}), 403
+    response = jsonify({"success": True, "redirect_url": "https://think4u.org"})
+    response.delete_cookie("launch_token")
+    return response
 
 
 def _build_page_context(config: dict) -> dict:
@@ -178,23 +227,18 @@ def _build_page_context(config: dict) -> dict:
         "tagline":       b.get("tagline", ""),
         "primary_color": b.get("primary_color", "#1f0606"),
         "accent_color":  b.get("accent_color", "#d58d4b"),
-        "logo_url":      b.get("logo_url", "/static/images/logo-white.png"),
-        "favicon_url":   b.get("favicon_url", "/static/images/favicon.ico"),
+        "logo_url":      b.get("logo_url", "/images/logo-white.png"),
+        "favicon_url":   b.get("favicon_url", "/images/favicon.ico"),
         # Hero
         "headline":          h.get("headline", "A More Meaningful Future Begins Here."),
         "description":       h.get("description", ""),
         "cta_primary_text":  h.get("cta_primary_text", "LAUNCH THINK4U"),
-        "cta_primary_url":   h.get("cta_primary_url", "#contact"),
-        "cta_secondary_text":h.get("cta_secondary_text", "Learn About Think4U"),
-        "cta_secondary_url": h.get("cta_secondary_url", "https://think4u.org"),
-        "hero_image_url":    h.get("hero_image_url", ""),
         # Countdown
         "countdown_visible":    lc.get("countdown_visible", True),
         "countdown_target_utc": get_countdown_target_utc(config),
         "launch_display_dt":    get_display_launch_datetime(config),
-        "auto_redirect":        lc.get("auto_redirect", False),
         "redirect_url":         lc.get("redirect_url", "https://think4u.org"),
-        "redirect_delay":       lc.get("redirect_delay_seconds", 1.7),
+        "redirect_delay":       15,
         "launch_button_enabled":lc.get("launch_button_enabled", True),
         "timezone":             lc.get("timezone", "Asia/Kolkata"),
         # Content
@@ -279,7 +323,6 @@ def admin_dashboard():
     ctx = {
         "config":           config,
         "timezones":        COMMON_TIMEZONES,
-        "launch_status":    get_launch_status(config),
         "countdown_target": get_countdown_target_utc(config),
         "launch_display_dt":get_display_launch_datetime(config),
         "admin_user":       session.get("admin_user", "admin"),
@@ -310,22 +353,15 @@ def admin_save():
             "headline":           form.get("headline", "").strip(),
             "description":        form.get("description", "").strip(),
             "cta_primary_text":   form.get("cta_primary_text", "").strip(),
-            "cta_primary_url":    form.get("cta_primary_url", "").strip(),
-            "cta_secondary_text": form.get("cta_secondary_text", "").strip(),
-            "cta_secondary_url":  form.get("cta_secondary_url", "").strip(),
-            "hero_image_url":     form.get("hero_image_url", "").strip(),
         },
         "launch": {
             "launch_date":           form.get("launch_date", "").strip(),
             "launch_time":           form.get("launch_time", "").strip(),
             "timezone":              form.get("timezone", "Asia/Kolkata").strip(),
-            "launch_status":         form.get("launch_status", "coming_soon").strip(),
             "countdown_visible":     form.get("countdown_visible") == "true",
-            "auto_redirect":         False,
             "launch_button_enabled": form.get("launch_button_enabled") == "true",
             "redirect_url":          "https://think4u.org",
-            "redirect_delay_seconds":float(form.get("redirect_delay_seconds", 1.7) or 1.7),
-            "animation_style":       form.get("animation_style", "orbit").strip(),
+            "redirect_delay_seconds":15,
         },
         "content": {
             "mission_text":    form.get("mission_text", "").strip(),
@@ -351,7 +387,7 @@ def admin_save():
 
     success, message = save_config(new_config)
     if success:
-        log.info("Admin saved config. Launch status: %s", new_config["launch"]["launch_status"])
+        log.info("Admin saved launch page configuration")
     else:
         log.error("Admin config save failed: %s", message)
 
@@ -363,21 +399,7 @@ def admin_save():
 def admin_preview():
     """Render the public launch page for in-admin preview."""
     config = load_config()
-    ctx = _build_page_context(config)
-    ctx["is_preview"] = True
-    return render_template("launch.html", **ctx)
-
-
-@app.route("/admin/status")
-@admin_required
-def admin_status():
-    """JSON endpoint returning current launch status (for live UI updates)."""
-    config = load_config()
-    return jsonify({
-        "launch_status":    get_launch_status(config),
-        "countdown_target": get_countdown_target_utc(config),
-        "launch_display_dt":get_display_launch_datetime(config),
-    })
+    return _launch_response(config)
 
 # ---------------------------------------------------------------------------
 # Error handlers
