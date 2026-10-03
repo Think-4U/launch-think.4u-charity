@@ -35,7 +35,10 @@ logging.basicConfig(
 log = logging.getLogger("think4u.launch")
 
 app = Flask(__name__, static_folder="public", static_url_path="")
-app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
+configured_secret = os.environ.get("SECRET_KEY", "").strip()
+app.secret_key = configured_secret or secrets.token_hex(32)
+if not configured_secret and os.environ.get("VERCEL"):
+    log.warning("SECRET_KEY is unset in Vercel. The public page remains available, but admin sessions will not survive function restarts. Set a stable SECRET_KEY in Project Settings.")
 
 # Session cookie security
 app.config.update(
